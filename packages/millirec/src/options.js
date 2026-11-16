@@ -1,10 +1,11 @@
-// The three shipped CNN options (dist/char-cnn/options/<name>.json), shared by
+// The shipped CNN options (dist/char-cnn/options/<name>.json), shared by
 // the char-cnn and char-cnn/core entries. Both bundle their own copy; it is
 // small, and a shared chunk would be one more file to resolve.
 import { assetBaseOf, fetchAsset } from '../../../library/src/assetbase.js'
 import { HERE, nodeFileUrl } from './here.js'
 
-export const OPTIONS = ['accurate', 'fast', 'small']
+// accurate, fast, small read capital letters A–Z; digits and lowercase read what they say
+export const OPTIONS = ['accurate', 'fast', 'small', 'digits', 'lowercase']
 
 /** Fetch a shipped option's config ({ classes, stages, kernel? }). */
 export async function loadOption(name, { assetBase = HERE } = {}) {

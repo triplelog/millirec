@@ -79,15 +79,24 @@ esbuild(path.join(ROOT, 'library/src/char-cnn.js'), path.join(CNN, 'millirec-cha
 esbuild(path.join(ROOT, 'library/src/char-cnn-core.js'), path.join(CNN, 'millirec-char-cnn-core.min.js'), 'iife', 'es2020')
 const options = fs.readdirSync(path.join(TPL, 'char-cnn/options'), { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name).sort()
 for (const o of options) {
-  const cfgFile = path.join(TPL, 'char-cnn/options', o, 'config.js')
+  const dir = path.join(TPL, 'char-cnn/options', o)
+  const cfgFile = path.join(dir, 'config.js')
   const cfg = globalJson(cfgFile, 'MILLIREC_CNN')
-  // ship exactly the model and kernel files the options name (the templates hold the experiments too)
-  for (const f of [cfg.kernel, cfg.kernel && cfg.kernel.replace(/\.js$/, '.wasm'), ...cfg.stages.flatMap((s) => [s.model, s.head])].filter(Boolean)) {
-    if (!fs.existsSync(path.join(TPL, 'char-cnn', f))) throw new Error(`option ${o} needs ${f}, which is not in library/templates/char-cnn/`)
-    copy(path.join(TPL, 'char-cnn', f), path.join(CNN, f))
+  // Every option folder is complete (scripts/build-cnn-options.mjs) and its files are the ones that
+  // were measured — and three options each call their first network `tiny.bin`. So an option's
+  // model files ship under options/<name>/ and its config names them there. (0.1.0 and 0.1.1 took
+  // one shared `tiny.bin` for all three, so `fast` and `small` ran `accurate`'s first network.)
+  const need = (f) => { const from = path.join(dir, f); if (!fs.existsSync(from)) throw new Error(`option ${o} needs ${f}, which is not in library/templates/char-cnn/options/${o}/`); return from }
+  for (const st of cfg.stages) for (const k of ['model', 'head']) { copy(need(st[k]), path.join(CNN, 'options', o, st[k])); st[k] = `options/${o}/${st[k]}` }
+  // the kernel is one program for every model: shared, beside the runtime
+  for (const f of [cfg.kernel, cfg.kernel && cfg.kernel.replace(/\.js$/, '.wasm')].filter(Boolean)) {
+    const from = need(f), to = path.join(CNN, f)
+    if (fs.existsSync(to) && !fs.readFileSync(to).equals(fs.readFileSync(from))) throw new Error(`options ship different kernels named ${f}`)
+    copy(from, to)
   }
   fs.writeFileSync(path.join(CNN, 'options', o + '.json'), JSON.stringify(cfg, null, 2))
-  copy(cfgFile, path.join(CNN, 'options', o + '.js'))
+  const header = fs.readFileSync(cfgFile, 'utf8').split('\n').filter((l) => l.startsWith('//')).join('\n')
+  fs.writeFileSync(path.join(CNN, 'options', o + '.js'), `${header}\nwindow.MILLIREC_CNN = ${JSON.stringify(cfg, null, 2)}\n`)
 }
 
 // ---- overlap (script tag only for now) ---------------------------------------

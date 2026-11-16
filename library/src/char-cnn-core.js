@@ -40,6 +40,11 @@ const DESTROYED = 'millirec: recognizer destroyed'
 const makeCanvas = (n) => (typeof document !== 'undefined' && document.createElement ? Object.assign(document.createElement('canvas'), { width: n, height: n })
   : typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(n, n) : null)
 
+// teach(): similarity → probability. Fitted on one writer's 68 characters, three examples each: at 18 the mean
+// top probability (86%) matches how often the top answer is right (88%); log-loss is flat from 14 to 24.
+const TEACH_SHARPNESS = 18
+const unitOf = (e) => { let n = 0; for (let i = 0; i < e.length; i++) n += e[i] * e[i]; n = Math.sqrt(n) || 1; const o = new Float32Array(e.length); for (let i = 0; i < e.length; i++) o[i] = e[i] / n; return o }
+
 export class MillirecCharCnnCore {
   static async create(opts = {}) {
     const g = typeof window !== 'undefined' ? window : globalThis
@@ -50,6 +55,7 @@ export class MillirecCharCnnCore {
     }
     const inst = new this(config)
     await inst.ready
+    if (config.examples) await inst.teach(config.examples)   // create({ examples }) = create() then teach()
     return inst
   }
 
@@ -126,6 +132,7 @@ export class MillirecCharCnnCore {
     if (this.destroyed || !this.stages.length) return null
     this._planeFor = null   // one draw + readback per call, shared by the stages
     const keep = only ? new Set(only) : null
+    if (this.taught) return this.nearest(strokes, keep)
     let z = null, used = 0
     for (let s = 0; s < this.stages.length; s++) {
       const st = this.stages[s]
@@ -145,6 +152,53 @@ export class MillirecCharCnnCore {
     out.stage = used
     return out
   }
+
+  /** recognize() once teach() has run: the drawing against every taught example, in the last stage's feature space. */
+  nearest(strokes, keep) {
+    const last = this.stages.length - 1, st = this.stages[last]
+    const q = unitOf(st.embed(this.raster(strokes, st.size)))
+    const names = [...this.taught.keys()].filter((c) => !keep || keep.has(c))
+    const out = []
+    if (names.length) {
+      // a class is as close as its closest example; similarities become probabilities at a sharpness
+      // fitted so the stated probability matches how often the top answer is right (TEACH_SHARPNESS)
+      const sim = names.map((c) => { let b = -2; for (const e of this.taught.get(c)) { let d = 0; for (let i = 0; i < q.length; i++) d += q[i] * e[i]; if (d > b) b = d } return b })
+      const p = softmax(sim.map((v) => v * TEACH_SHARPNESS))
+      for (const i of [...p.keys()].sort((a, b) => p[b] - p[a]).slice(0, 3)) out.push({ char: names[i], prob: p[i] })
+    }
+    out.stage = last
+    return out
+  }
+
+  /**
+   * TEACH: read symbols of your own from a few drawings of each, with no training. `examples` is
+   * `{ name: [drawing, …] }` — names are any strings (a letter, 'star', an emoji), a drawing is strokes as for
+   * recognize(). Each drawing is kept as what the last stage's network makes of it; from then on recognize() answers
+   * AMONG THE TAUGHT NAMES ONLY, by the nearest example. Three drawings of each is a good start, five is better;
+   * draw the variants people really use. `{ add: true }` keeps what was taught before (new drawings of a known name
+   * are added to it). Returns { classes, n } or null (nothing usable). forget() goes back to the shipped classes.
+   * Works best on an option whose last stage is the larger network (`accurate`, the default, or `fast`).
+   */
+  async teach(examples, { add = false } = {}) {
+    await this.ready
+    if (this.destroyed || !this.stages.length) return null
+    const taught = add && this.taught ? new Map([...this.taught].map(([c, list]) => [c, list.slice()])) : new Map()
+    for (const [name, list] of Object.entries(examples || {})) {
+      for (const drawing of list || []) {
+        const strokes = asStrokes(drawing)
+        if (!strokes || !strokes.length) continue
+        const e = unitOf(await this.embedding(strokes))
+        if (this.destroyed) return null
+        if (!taught.has(name)) taught.set(name, [])
+        taught.get(name).push(e)
+      }
+    }
+    if (!taught.size) { if (!add) this.taught = null; return null }
+    this.taught = taught
+    return { classes: [...taught.keys()], n: [...taught.values()].reduce((a, l) => a + l.length, 0) }
+  }
+  /** Drop everything teach() learned: recognize() reads the shipped classes again. */
+  forget() { this.taught = null }
 
   /** The last stage's (unit) embedding of drawn strokes — what the head reads. */
   async embedding(strokes) {
@@ -199,7 +253,7 @@ export class MillirecCharCnnCore {
     return this.personal
   }
   /** Let go of the models and kernels; recognize() and personalize() return null afterwards, embedding() throws. */
-  destroy() { this.destroyed = true; this.stages = []; this.personal = null; this._plane = null; this._planeFor = null }
+  destroy() { this.destroyed = true; this.stages = []; this.personal = null; this.taught = null; this._plane = null; this._planeFor = null }
   depersonalize() { const st = this.stages[this.stages.length - 1]; if (st && st.head0) st.head = st.head0; this.personal = null }
 }
 

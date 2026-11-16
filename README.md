@@ -41,7 +41,7 @@ Three pieces, pick by what you need to read:
 | | reads | size (gzip) | trainable on your own strokes |
 |---|---|---|---|
 | `millirec/char-lite` | anything you have samples for: digits, letters, punctuation, emoji, made-up symbols | 26 KB + the training set (digits 4 KB, all 27 KB) | **yes** — add samples, add whole new classes |
-| `millirec/char-cnn` | capital letters A–Z | 15 KB (`small`) to 47 KB (`fast`); `accurate` 42 KB | refit on a writer's own letters (`personalize`) |
+| `millirec/char-cnn` | capital letters, lowercase letters or digits — and symbols of your own from a few drawings each (`teach`) | 15 KB (`small`) to 47 KB (`fast`); `accurate`, `digits`, `lowercase` about 41 KB each | `teach` new symbols with no training; `personalize` toward one writer; or train a model |
 | overlap (script tag) | whole words written letter over letter in one box | 34 KB (script 20 + wasm 14) + training (capitals 19 KB, all 42 KB) + the default word list (38 KB, skipped when you pass `words`) | — |
 
 ## Install
@@ -139,14 +139,29 @@ training set can also be built offline and loaded with `fetch`.
 ```js
 import { MillirecCharCnn } from 'millirec/char-cnn'
 
-const rec = await MillirecCharCnn.create()                    // the 'accurate' option
-// or: await MillirecCharCnn.create({ option: 'fast' })        // 'accurate' | 'fast' | 'small'
-// (a bare name works too: create('fast'))
+const rec = await MillirecCharCnn.create()                    // the 'accurate' option: capital letters
+// or: await MillirecCharCnn.create({ option: 'digits' })      // see the table below
+// (a bare name works too: create('digits'))
 rec.attach(document.querySelector('#pad'))
 await rec.recognize(strokes, { only: 'AEIOU' })              // restrict the answer to some letters
 await rec.personalize({ A: [a1, a2, a3], R: [r1, r2] })      // lean toward this writer's hand
 rec.destroy()                                                // let go of the models
 ```
+
+| option | reads | strangers' handwriting read right | gzip, with the pad |
+|---|---|---|---|
+| `accurate` (default) | capitals A–Z | 98.5% | 41 KB |
+| `fast` | capitals A–Z | 97.8% | 49 KB |
+| `small` | capitals A–Z | 96.4% | 10 KB (no pad, no wasm) |
+| `digits` | 0–9 | 99.6% | 40 KB |
+| `lowercase` | a–z | 93.7% | 42 KB |
+
+Measured on EMNIST test images, which none of the models were trained on (7,800 capitals, 3,000
+digits, 7,800 lowercase letters, from hundreds of writers). `digits` and `lowercase` are the same
+pair of networks as `accurate` — a small one answers, a larger one takes the close calls. Most of
+what `lowercase` gets wrong is `g`/`q` and `i`/`l`/`j`, which people draw alike. One recognizer
+reads one alphabet; to read two, create two and take the more confident answer, or `teach` your
+own set.
 
 `millirec/char-cnn/core` is the same recognizer without the drawing pad; it also runs inside a
 Web Worker (it draws on an `OffscreenCanvas` there). After `destroy()`, `recognize()` and
@@ -154,10 +169,46 @@ Web Worker (it draws on an `OffscreenCanvas` there). After `destroy()`, `recogni
 
 ### Your own symbols
 
-`create()` takes any model in the same format: `MillirecCharCnn.create({ classes, stages, assetBase })`,
-where `classes` is a string of single characters or a list of names. Training one from your own
-drawings — a dozen per symbol, a few seconds — is a four-command walk-through in the repository:
+**No training: `teach()`.** Give the recognizer a few drawings of each symbol and it reads them —
+letters of another alphabet, a rating scale, proof-reading marks, emoji:
+
+```js
+const rec = await MillirecCharCnn.create()                    // 'accurate' (or 'fast')
+await rec.teach({
+  star:  [star1, star2, star3],                               // each a drawing: [[{x, y}, …], …]
+  heart: [heart1, heart2, heart3],
+  '✓':   [tick1, tick2, tick3],
+})
+await rec.recognize(strokes)                                  // [{ char: 'star', prob: 0.93 }, …]
+await rec.teach({ arrow: [a1, a2, a3] }, { add: true })       // one more, keeping the others
+rec.forget()                                                  // back to the letters
+```
+
+Each example is kept as what the network makes of it, and a new drawing is given to the name of
+its nearest example; after `teach()` the recognizer answers among the taught names only. Nothing is
+trained and nothing is stored: keep the example strokes yourself (`pad.getStrokes()`) and call
+`teach()` again when the page loads, or pass them as `create({ examples })`.
+
+How well it works, measured with the shipped `accurate` network — which was trained on capital
+letters only — on one writer's drawings of things it has never seen, tested on that writer's other
+drawings:
+
+| examples of each | digits (10) | lowercase (26) | six punctuation marks |
+|---|---|---|---|
+| 1 | 92% | 86% | 84% |
+| 3 | 96% | 93% | 88% |
+| 5 | 99% | 96% | 89% |
+
+Three is a good start and five is better; draw the variants people really use. Symbols that
+differ only in size or position (`.` and `,`, `o` and `O`) cannot be told apart: every drawing is
+scaled to fill the picture before it is read.
+
+**With training.** `create()` also takes any model in the same format:
+`MillirecCharCnn.create({ classes, stages, assetBase })`, where `classes` is a string of single
+characters or a list of names. Training one from your own drawings — a dozen per symbol, a few
+seconds — is a four-command walk-through in the repository:
 [train your own recognizer](https://github.com/triplelog/millirec/blob/main/packages/millirec/train/README.md).
+That is the route to the last few percent, the smallest download, and a recognizer for many writers.
 
 ## overlap: words written in one box
 
@@ -327,6 +378,7 @@ itself is [`packages/millirec`](packages/millirec); the folders beside it are wh
 | `packages/millirec/` | the package: `build.mjs`, the ES-module entry points (`src/`), the type declarations (`types/`), the tests |
 | `packages/millirec/train/` | **[train your own recognizer](packages/millirec/train/README.md)**: drawings → a model the package loads, with one writer's handwriting to start from |
 | `cnnlab/` | the CNN trainer (`caps.py`, PyTorch) and what it imports |
+| `cpp/` | the point-cloud matcher behind char-lite and overlap: `match.cpp` (pair costs, pruning, scoring) and `assign.cpp` (the assignment solver, with an early exit for templates that cannot matter) |
 | `library/src/` | the recognizers: `char-lite.js`, `char-cnn.js`, `char-cnn-core.js`, `overlap.js` |
 | `core/` | the training format, the stroke math, and the overlap engine (`core/overlap/overlap.js`) |
 | `widget/` | the drawing pad (`canvas.js`) and the scribble-to-clear gesture (`scribble.js`) |
@@ -340,8 +392,11 @@ npm test           # builds, then reads drawn strokes in headless Chrome (needs 
 ```
 
 The JavaScript is built from source here, and the CNN trainer is here to make models of your own.
-Included as built, without their sources: the WebAssembly point-cloud matcher (char-lite, overlap),
-the CNN's WebAssembly kernel, and the shipped capital-letter models (trained on EMNIST).
+The matcher's WebAssembly is rebuilt with `bash scripts/build-wasm-lite.sh` (needs
+[Emscripten](https://emscripten.org); set `EMSDK` to its folder), which writes
+`dist/lite/millirec.{js,wasm}` — the same bytes that ship. Included as built, without their
+sources: the worker that wraps the matcher, the CNN's WebAssembly kernel, and the shipped letter and
+digit models (trained on EMNIST).
 
 The folder layout mirrors the larger private repository this is exported from, which is why a few
 paths look deeper than they need to be. Work happens there and is exported here release by

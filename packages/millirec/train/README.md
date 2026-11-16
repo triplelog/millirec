@@ -5,6 +5,14 @@ proof-reading marks, an alphabet — is a small convolutional network trained on
 A dozen drawings per symbol is enough to start; training takes seconds on a laptop, and the
 result is a 7 KB model file that `millirec/char-cnn` loads like its own.
 
+**Before training anything, try `teach()`.** `millirec/char-cnn` can read symbols it has never
+seen from three to five drawings of each, in the browser, with no training step — it compares a
+new drawing with your examples inside the shipped network (see the package README, "Your own
+symbols"). On this folder's handwriting, with a network that was only ever trained on capital
+letters: three examples per digit read 96% of the other drawings of that writer's digits, five
+read 99%. Train a model, as below, when you want the last few percent, the smallest possible
+download, or a recognizer for many different writers.
+
 The four steps below make a digit recognizer from the handwriting in this folder. Run them from
 the repository root.
 
@@ -74,10 +82,18 @@ drawings — about twelve of each), a quarter held out, 300 epochs:
 | everything (68) | `tiny` | 89.8% of 226 | 99.1% | 6.8 KB | 33 s |
 | everything (68) | `base` | 94.7% of 226 | 99.1% | 36 KB | 2 min 40 s |
 
-Read these for what they are: **one writer, tested on that same writer's other drawings.** A
-recognizer for many hands needs many hands in its training — the capital-letter models that ship
-in the package were trained on 2,400 drawings per letter from hundreds of writers (EMNIST) and
-read 96–98.5% of strangers' letters. What is left wrong in the 68-class set is mostly what no
+Read these for what they are: **one writer, tested on that same writer's other drawings.** Shown
+other people's handwriting (EMNIST), the same models read far less:
+
+| trained on this one writer | strangers' digits | strangers' lowercase | strangers' capitals |
+|---|---|---|---|
+| `tiny` | 73% | 58% | 62% |
+| `base` | 89% | 69% | 74% |
+
+A recognizer for many hands needs many hands in its training. The models that ship in the package
+were trained on 2,400 drawings per character from hundreds of writers (EMNIST) and read 96–99.5% of
+strangers' capitals and digits. To see how yours does on someone else, rasterize their drawings
+into a second run and score against it: `score.mjs --run runs/mine --tag tiny --on runs/theirs --all`. What is left wrong in the 68-class set is mostly what no
 picture can settle: `0`/`O`, `l`/`1`, `S`/`s` — the same ink at a different size.
 
 ## Choosing a model

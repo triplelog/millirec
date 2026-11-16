@@ -98,6 +98,33 @@ window.__esmExtra = async () => {
   lw.postMessage = post
   out.stuckAfter = await lite3.recognize(same)
   lite3.destroy()
+  // the digits and lowercase options
+  const dg = await MillirecCharCnn.create('digits')
+  out.optDigit = await dg.recognize([line(50, 10, 52, 120)])
+  out.optSeven = await dg.recognize([[...line(10, 10, 90, 10), ...line(90, 10, 40, 120).slice(1)]])
+  dg.destroy()
+  const lc = await MillirecCharCnn.create({ option: 'lowercase' })
+  out.optO = await lc.recognize([Array.from({ length: 28 }, (_, i) => ({ x: 60 + 40 * Math.cos(i / 27 * 2 * Math.PI), y: 60 + 44 * Math.sin(i / 27 * 2 * Math.PI) }))])
+  out.optV = await lc.recognize([[...line(10, 10, 50, 110), ...line(50, 110, 90, 10).slice(1)]])
+  out.lcClasses = lc.classes.join('')
+  lc.destroy()
+  // teach(): symbols of one's own from three drawings each, no training — and forget() goes back to letters
+  const taught = await MillirecCharCnn.create()
+  const bolt = (j = 0) => [zigzag(j)]
+  const ring = (j = 0) => [Array.from({ length: 28 }, (_, i) => ({ x: 60 + j + 40 * Math.cos(i / 27 * 2 * Math.PI), y: 60 + 44 * Math.sin(i / 27 * 2 * Math.PI) }))]
+  const cross = (j = 0) => [line(20 + j, 20, 100 + j, 100), line(100 + j, 20, 20 + j, 100)]
+  out.teach = await taught.teach({ bolt: [bolt(0), bolt(3), bolt(-3)], ring: [ring(0), ring(4), ring(-4)], cross: [cross(0), cross(5), cross(-5)] })
+  out.taughtBolt = await taught.recognize(bolt(1))
+  out.taughtRing = await taught.recognize(ring(2))
+  out.taughtOnly = await taught.recognize(ring(2), { only: ['bolt', 'cross'] })
+  out.taughtMore = await taught.teach({ bar: [[line(10, 60, 110, 62)], [line(12, 64, 108, 60)], [line(8, 58, 112, 58)]] }, { add: true })
+  out.taughtBar = await taught.recognize([line(10, 61, 110, 61)])
+  taught.forget()
+  out.forgotten = await taught.recognize([line(20, 10, 20, 110), line(20, 110, 90, 110)])
+  taught.destroy()
+  const viaCreate = await MillirecCharCnn.create({ examples: { ring: [ring(0), ring(4)], cross: [cross(0), cross(5)] } })
+  out.viaCreate = await viaCreate.recognize(cross(2))
+  viaCreate.destroy()
   // a string names the option
   const fast = await MillirecCharCnn.create('fast')
   out.stringOption = await fast.recognize([line(20, 10, 20, 110), line(20, 110, 90, 110)])
@@ -197,6 +224,13 @@ try {
       check('a root-relative assetBase without its slash works for loadSet and create', top(x.liteRel)[0] === '1', top(x.liteRel).join(' '))
       check('cnn reads a single stroke, not only a list of strokes', top(x.oneStroke)[0] === 'L', top(x.oneStroke).join(' '))
       check('a recognize() that timed out does not poison the same strokes', x.stuckFirst === null && top(x.stuckAfter)[0] === '1', `first ${JSON.stringify(x.stuckFirst)}, then ${top(x.stuckAfter).join(' ')}`)
+check('the digits option reads a 1 and a 7', top(x.optDigit)[0] === '1' && top(x.optSeven).includes('7'), `${top(x.optDigit).join(' ')} | ${top(x.optSeven).join(' ')}`)
+      check('the lowercase option reads an o and a v, among a–z', top(x.optO)[0] === 'o' && top(x.optV).includes('v') && x.lcClasses === 'abcdefghijklmnopqrstuvwxyz', `${top(x.optO).join(' ')} | ${top(x.optV).join(' ')}`)
+      check('teach(): three drawings each of three made-up symbols, and each reads as itself', x.teach && x.teach.n === 9 && top(x.taughtBolt)[0] === 'bolt' && top(x.taughtRing)[0] === 'ring', `${top(x.taughtBolt).join(' ')} | ${top(x.taughtRing).join(' ')}`)
+      check('teach(): `only` restricts among the taught names', top(x.taughtOnly).length === 2 && !top(x.taughtOnly).includes('ring'), top(x.taughtOnly).join(' '))
+      check('teach({ add: true }) keeps the earlier symbols and reads the new one', x.taughtMore && x.taughtMore.classes.length === 4 && top(x.taughtBar)[0] === 'bar', top(x.taughtBar).join(' '))
+      check('forget() goes back to the letters', top(x.forgotten)[0] === 'L', top(x.forgotten).join(' '))
+      check('create({ examples }) teaches at creation', top(x.viaCreate)[0] === 'cross', top(x.viaCreate).join(' '))
       check('cnn destroy() lets go: recognize returns null after', x.afterDestroy === null)
       check('cnn personalize after destroy returns null', x.personalizeAfter === null)
       check('cnn embedding after destroy throws a clear error', x.embeddingAfter === 'millirec: recognizer destroyed', x.embeddingAfter)

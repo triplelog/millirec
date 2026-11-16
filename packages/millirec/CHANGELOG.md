@@ -2,6 +2,26 @@
 
 ## 0.1.2
 
+- **char-cnn reads digits and lowercase letters**: two new options, `create('digits')` (99.6% of
+  strangers' digits) and `create('lowercase')` (93.7%), the same pair of networks as `accurate`,
+  trained on EMNIST plus this project's own writer.
+- **`teach()`: symbols of your own with no training.** `rec.teach({ star: [d1, d2, d3], … })` keeps
+  each drawing as what the network makes of it and reads new drawings by the nearest example;
+  `forget()` undoes it, `create({ examples })` does it at creation. Three examples per class read
+  96% of one writer's digits with the capitals-only network.
+- **`fast` and `small` now run their own first network.** 0.1.0 and 0.1.1 shipped one `tiny.bin`
+  for all three capital-letter options, so `fast` and `small` ran `accurate`'s first network instead
+  of the ones they were measured with. Each option's model files now live in
+  `dist/char-cnn/options/<name>/` (the option's JSON names them there; the shared wasm kernel stays
+  beside the runtime). If you copied `dist/char-cnn/` into your site, copy it again.
+- **char-lite and overlap: a new assignment solver, about a quarter faster.** The matcher's
+  assignment step is now millirec's own (`cpp/assign.cpp` in the repository), written for this
+  problem: it stops as soon as a template provably cannot matter, and it starts from prices that
+  account for the points either side may drop. One recognition against 215 templates went from
+  0.66 ms to 0.49 ms; the wasm is 27.8 KB (was 29.9). Readings can differ from 0.1.1 in close
+  calls — on one writer's held-out drawings top-1 is unchanged for capitals and digits and two
+  better of 381 for lowercase. Input the matcher cannot use (thousands of points, NaN
+  coordinates) no longer traps.
 - **A `recognize()` that timed out no longer poisons its strokes.** When char-lite's worker did
   not answer within 4 s the call resolved `null`, but the request stayed marked as in flight, so
   every later `recognize()` of the same strokes waited 4 s and resolved `null` again without the

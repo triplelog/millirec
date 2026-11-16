@@ -1,8 +1,8 @@
 {
- "generated": "2026-09-10T13:47:38.537Z",
+ "generated": "2026-11-16T20:48:50.138Z",
  "pps": 25,
  "folds": 3,
- "fixedKB": 54.2,
+ "fixedKB": 58.2,
  "sets": {
   "capitals": {
    "title": "Capital letters A–Z",
@@ -14,12 +14,12 @@
    "pps": 25,
    "top1": 99.69,
    "top3": 99.69,
-   "msPerChar": 0.63,
+   "msPerChar": 0.49,
    "folds": 3,
    "trainingKB": 44.2,
    "trainingGz": 10.9,
-   "bundleKB": 98.4,
-   "zipKB": 37.1,
+   "bundleKB": 102.4,
+   "zipKB": 38.5,
    "errors": [
     "A→R"
    ],
@@ -33,22 +33,20 @@
    "cells": 381,
    "templates": 381,
    "pps": 25,
-   "top1": 98.16,
+   "top1": 98.69,
    "top3": 100,
-   "msPerChar": 0.68,
+   "msPerChar": 0.52,
    "folds": 3,
    "trainingKB": 49.9,
    "trainingGz": 11.4,
-   "bundleKB": 104.1,
-   "zipKB": 37.6,
+   "bundleKB": 108.1,
+   "zipKB": 38.9,
    "errors": [
     "a→u",
     "i→j",
-    "t→e",
     "u→a",
     "u→a",
-    "q→g",
-    "s→y"
+    "q→g"
    ],
    "missing": ""
   },
@@ -60,17 +58,15 @@
    "cells": 126,
    "templates": 126,
    "pps": 25,
-   "top1": 99.21,
+   "top1": 100,
    "top3": 100,
-   "msPerChar": 0.32,
+   "msPerChar": 0.23,
    "folds": 3,
    "trainingKB": 17.1,
    "trainingGz": 4.4,
-   "bundleKB": 71.3,
-   "zipKB": 30.4,
-   "errors": [
-    "4→9"
-   ],
+   "bundleKB": 75.3,
+   "zipKB": 31.8,
+   "errors": [],
    "missing": ""
   },
   "punctuation": {
@@ -83,12 +79,12 @@
    "pps": 25,
    "top1": 91.78,
    "top3": 98.63,
-   "msPerChar": 0.2,
+   "msPerChar": 0.15,
    "folds": 3,
    "trainingKB": 9.4,
    "trainingGz": 1.7,
-   "bundleKB": 63.6,
-   "zipKB": 27.7,
+   "bundleKB": 67.6,
+   "zipKB": 29,
    "errors": [
     ".→,",
     ".→-",
@@ -108,13 +104,13 @@
    "templates": 903,
    "pps": 25,
    "top1": 92.03,
-   "top3": 97.79,
-   "msPerChar": 1.4,
+   "top3": 97.9,
+   "msPerChar": 1.13,
    "folds": 3,
    "trainingKB": 120.2,
    "trainingGz": 27,
-   "bundleKB": 174.4,
-   "zipKB": 53.9,
+   "bundleKB": 178.4,
+   "zipKB": 55.2,
    "errors": [
     "0→O",
     "1→I",
@@ -129,14 +125,14 @@
     "I→1",
     "i→j",
     "l→I",
+    "l→I",
     "M→m",
     "n→D",
     "o→O",
+    "s→S",
     "S→s",
-    "t→e",
     "u→a",
     "U→u",
-    "y→Y",
     "0→O",
     "1→I",
     "1→I",
@@ -155,7 +151,7 @@
     "s→S",
     "s→S",
     "u→U",
-    "v→V"
+    "u→U"
    ],
    "missing": "%$"
   }

@@ -6,3 +6,6 @@ packages/millirec/dist/
 runs/
 my-*/
 __pycache__/
+# scripts/build-wasm-lite.sh output (millirec.esm.js beside them is tracked)
+dist/lite/millirec.js
+dist/lite/millirec.wasm

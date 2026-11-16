@@ -1,0 +1,15 @@
+{
+  "name": "millirec-source",
+  "private": true,
+  "version": "0.1.2",
+  "license": "MIT",
+  "description": "Source of the millirec npm package (the package itself is packages/millirec)",
+  "scripts": {
+    "build": "npm --prefix packages/millirec run build",
+    "test": "npm --prefix packages/millirec test"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.12",
+    "canvas": "3.2.3"
+  }
+}

@@ -1,0 +1,51 @@
+# Changelog
+
+## 0.1.2
+
+- **A `recognize()` that timed out no longer poisons its strokes.** When char-lite's worker did
+  not answer within 4 s the call resolved `null`, but the request stayed marked as in flight, so
+  every later `recognize()` of the same strokes waited 4 s and resolved `null` again without the
+  worker being asked. The request is forgotten once nobody is waiting on it (`rawScores()` too).
+- A worker that fails after it has booted releases every waiting call with `null` at once; a
+  worker that fails to boot is terminated and its blob URL revoked when `create()` rejects.
+- README: a complete one-file page to start from (ES module from a CDN) and a complete script-tag
+  page; which CDNs work (jsDelivr, unpkg — not esm.sh); pin the full version; how to load the
+  overlap widget through a bundler; TypeScript notes; where to report bugs.
+- package.json: `repository` (github.com/triplelog/millirec), `bugs` points at its issues.
+- The source is public at github.com/triplelog/millirec, with the CNN trainer, one writer's
+  handwriting and a walk-through for training a recognizer for your own symbols (not part of the
+  npm download).
+
+## 0.1.1
+
+- **Bundlers**: the package found its own folder with `new URL('./', import.meta.url)`, which Vite
+  and webpack 5 rewrite into a reference to the module FILE, so `loadSet()` fetched
+  `…/index.js/sets/digits.json`. The folder is now sliced from `import.meta.url`. With a bundler,
+  copy `dist/char-lite/` / `dist/char-cnn/` to your site and pass `assetBase` (README "Serving the
+  files", with Vite and webpack recipes; the old `optimizeDeps` advice did not work in 0.1.0; with this fix `optimizeDeps: { exclude: ['millirec'] }` works in Vite dev only, and builds still need the copy).
+- **Clear errors when the files are not served**: `loadSet`, `loadOption`, the CNN model/kernel
+  loader and char-lite's worker/wasm boot now say which URL failed, what came back (a 404, an HTML
+  page from an SPA fallback, unparseable JSON) and what to do, instead of failing in `JSON.parse` or
+  the matcher.
+- `"sideEffects"` lists the script-tag files (`dist/**/*.min.js`, `sets/*.js`, `options/*.js`) so a
+  bundler keeps `import 'millirec/overlap/millirec-overlap.min.js'`.
+- `destroy()`: char-lite resolves pending and later `recognize()`/`rawScores()` with `null`;
+  char-cnn's `personalize()` returns `null`, `embedding()` throws `millirec: recognizer destroyed`,
+  `depersonalize()` is a no-op (they used to read past an empty stage list).
+- char-cnn runs in a Web Worker (draws on `OffscreenCanvas`); webpack no longer tries to bundle the
+  kernel's dynamic import (`webpackIgnore`).
+- Node / SSR: `create()` outside a browser throws a message saying so; `loadSet`/`loadOption` in
+  Node say to import the JSON instead.
+- `MillirecCharCnn.create('fast')` = `create({ option: 'fast' })`.
+- char-lite's result cache is an LRU of 256 (it grew without bound).
+- Types: `Training.version` is `number` (and `mode` a string) so an imported set JSON type-checks;
+  `millirec:result` / `millirec:clear` are typed on `HTMLElementEventMap`; declarations for the
+  overlap widget's global (`import type {} from 'millirec/overlap'`); `typesVersions` for
+  `moduleResolution: node10`.
+- package.json: `bugs`, `engines` (node ≥ 18, for tooling that imports the JSON).
+- README: browser-only note, `destroy()`, the pad's options and events, overlap gzip sizes,
+  stable paths.
+
+## 0.1.0
+
+First release.

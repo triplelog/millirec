@@ -1,0 +1,8 @@
+node_modules/
+packages/millirec/dist/
+*.tgz
+.DS_Store
+# training runs and the recognizers made from them
+runs/
+my-*/
+__pycache__/

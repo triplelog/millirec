@@ -1,0 +1,4 @@
+# for cnnlab/caps.py, the trainer (packages/millirec/train/README.md)
+torch
+numpy
+pillow

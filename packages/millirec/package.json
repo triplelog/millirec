@@ -1,0 +1,97 @@
+{
+  "name": "millirec",
+  "version": "0.1.2",
+  "description": "Small, fast handwriting recognition in the browser: drawn characters, digits and symbols, trainable on your own strokes.",
+  "license": "MIT",
+  "author": "Robert Wilcox",
+  "homepage": "https://millirec.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/triplelog/millirec.git"
+  },
+  "bugs": "https://millirec.com/help.html",
+  "type": "module",
+  "main": "./dist/char-lite/index.js",
+  "types": "./dist/char-lite/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "char-lite": [
+        "dist/char-lite/index.d.ts"
+      ],
+      "char-cnn": [
+        "dist/char-cnn/index.d.ts"
+      ],
+      "char-cnn/core": [
+        "dist/char-cnn/core.d.ts"
+      ],
+      "overlap": [
+        "dist/overlap/index.d.ts"
+      ],
+      "char-lite/sets/*": [
+        "dist/char-lite/sets/*"
+      ],
+      "char-cnn/options/*": [
+        "dist/char-cnn/options/*"
+      ]
+    }
+  },
+  "keywords": [
+    "handwriting",
+    "recognition",
+    "ocr",
+    "stylus",
+    "pen",
+    "drawing",
+    "wasm",
+    "character-recognition",
+    "handwriting-recognition",
+    "browser",
+    "webassembly",
+    "digit-recognition"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/char-lite/index.d.ts",
+      "default": "./dist/char-lite/index.js"
+    },
+    "./char-lite": {
+      "types": "./dist/char-lite/index.d.ts",
+      "default": "./dist/char-lite/index.js"
+    },
+    "./char-cnn": {
+      "types": "./dist/char-cnn/index.d.ts",
+      "default": "./dist/char-cnn/index.js"
+    },
+    "./char-cnn/core": {
+      "types": "./dist/char-cnn/core.d.ts",
+      "default": "./dist/char-cnn/core.js"
+    },
+    "./char-lite/sets/*.json": "./dist/char-lite/sets/*.json",
+    "./char-cnn/options/*.json": "./dist/char-cnn/options/*.json",
+    "./overlap": {
+      "types": "./dist/overlap/index.d.ts"
+    },
+    "./overlap/*": "./dist/overlap/*",
+    "./dist/*": "./dist/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "sideEffects": [
+    "./dist/**/*.min.js",
+    "./dist/char-lite/sets/*.js",
+    "./dist/char-cnn/options/*.js"
+  ],
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node build.mjs && node test/verify.mjs",
+    "prepack": "node build.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

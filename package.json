@@ -3,10 +3,11 @@
   "private": true,
   "version": "0.1.2",
   "license": "MIT",
-  "description": "Source of the millirec npm package (the package itself is packages/millirec)",
+  "description": "Source of the millirec and millirec-clean npm packages (packages/millirec, packages/millirec-clean)",
   "scripts": {
-    "build": "npm --prefix packages/millirec run build",
-    "test": "npm --prefix packages/millirec test"
+    "build": "npm --prefix packages/millirec run build && npm --prefix packages/millirec-clean run build",
+    "test": "npm --prefix packages/millirec test && npm --prefix packages/millirec-clean test",
+    "postinstall": "npm --prefix packages/millirec-clean install --no-audit --no-fund"
   },
   "devDependencies": {
     "esbuild": "0.25.12",

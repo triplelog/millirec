@@ -383,12 +383,14 @@ itself is [`packages/millirec`](packages/millirec); the folders beside it are wh
 | `core/` | the training format, the stroke math, and the overlap engine (`core/overlap/overlap.js`) |
 | `widget/` | the drawing pad (`canvas.js`) and the scribble-to-clear gesture (`scribble.js`) |
 | `server/public/wordgpu/` | the CNN's forward pass in plain JavaScript |
+| `packages/millirec-clean/` | **[the page cleaner](packages/millirec-clean/README.md)** (`millirec-clean` on npm): photographed handwriting → flattened page, rules removed, words segmented and normalized |
+| `clean/` | the cleaner's source: TypeScript passes, and `clean/wasm/` — the C of Pass A, built to `clean/assets/hw.{mjs,wasm}` by `bash clean/wasm/build.sh` (needs Emscripten) |
 | `library/templates/`, `dist/lite/` | **prebuilt files** the build copies: the matcher (WebAssembly) and its worker, the CNN kernel and model files, the training sets, the overlap templates and word list |
 
 ```sh
-npm install        # esbuild
-npm run build      # writes packages/millirec/dist/, the files the npm package ships
-npm test           # builds, then reads drawn strokes in headless Chrome (needs Google Chrome)
+npm install        # esbuild (and TypeScript for the cleaner's types)
+npm run build      # writes packages/millirec/dist/ and packages/millirec-clean/dist/, the files the npm packages ship
+npm test           # builds, then runs both in headless Chrome (needs Google Chrome)
 ```
 
 The JavaScript is built from source here, and the CNN trainer is here to make models of your own.

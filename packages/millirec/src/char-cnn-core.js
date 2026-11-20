@@ -11,7 +11,7 @@ import { withOption } from './options.js'
 export { OPTIONS, loadOption } from './options.js'
 
 export class MillirecCharCnnCore extends Runtime {
-  /** opts: option ('accurate' | 'fast' | 'small', default 'accurate') or your own
+  /** opts: option ('accurate' | 'fast' | 'small' | 'digits' | 'lowercase', default 'accurate') or your own
    *  { classes, stages, kernel }, plus assetBase (default: this module's folder).
    *  A string is the option's name: create('fast') = create({ option: 'fast' }). */
   static async create(opts = {}) {

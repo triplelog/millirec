@@ -1,5 +1,7 @@
 node_modules/
 packages/millirec/dist/
+packages/millirec-clean/dist/
+packages/millirec-clean/tsconfig.types.json
 *.tgz
 .DS_Store
 # training runs and the recognizers made from them

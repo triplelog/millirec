@@ -1,0 +1,57 @@
+{
+  "name": "millirec-clean",
+  "version": "0.1.0",
+  "description": "Photographed-handwriting page cleanup in the browser: page detection and dewarp, rule removal, binarization, word segmentation, ink outlines. A small WASM page cleaner in a Web Worker plus the passes around it. Browser only.",
+  "license": "MIT",
+  "author": "Robert Wilcox",
+  "homepage": "https://millirec.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/triplelog/millirec.git",
+    "directory": "packages/millirec-clean"
+  },
+  "bugs": "https://millirec.com/help.html",
+  "type": "module",
+  "main": "./dist/index.mjs",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "default": "./dist/index.mjs"
+    },
+    "./train": {
+      "types": "./dist/types/trainImport.d.ts",
+      "default": "./dist/train.mjs"
+    },
+    "./worker": "./dist/worker.mjs",
+    "./assets/*": "./dist/assets/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "keywords": [
+    "handwriting",
+    "document",
+    "dewarp",
+    "binarization",
+    "segmentation",
+    "wasm",
+    "browser",
+    "handwriting-recognition",
+    "ocr",
+    "webassembly"
+  ],
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node build.mjs && node test/verify.mjs && node test/browser.mjs",
+    "prepack": "node build.mjs"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}
